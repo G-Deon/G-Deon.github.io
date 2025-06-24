@@ -1,80 +1,421 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Project Page</title>
-  <style>
-    body {;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 2rem;
-      background-color: #f9f9f9;
-      color: #333;
-    }
-    header {
-      text-align: center;
-      padding: 2rem 0;
-    }
-    h1 {
-      margin-bottom: 0.5rem;
-    }
-    p {
-      line-height: 1.6;
-    }
-    .section {
-      margin: 3rem 0;
-    }
-    code {
-      background-color: #eee;
-      padding: 0.2rem 0.4rem;
-      border-radius: 4px;
-    }
-    footer {
-      text-align: center;
-      margin-top: 4rem;
-      font-size: 0.9rem;
-      color: #777;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama do Conector AGP</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .connector-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .connector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .side-label {
+            font-weight: bold;
+            font-size: 1.4em;
+            margin: 10px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .pins-row {
+            display: flex;
+            justify-content: center;
+            margin: 5px 0;
+            flex-wrap: wrap;
+        }
+
+        .pin {
+            width: 16px;
+            height: 30px;
+            margin: 1px;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+        }
+
+        .pin:hover {
+            transform: scale(1.2);
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .ground { background: linear-gradient(145deg, #2c2c2c, #1a1a1a); }
+        .power-12v { background: linear-gradient(145deg, #ff4757, #c44569); }
+        .power-5v { background: linear-gradient(145deg, #ff6b6b, #ee5a52); }
+        .power-3v3 { background: linear-gradient(145deg, #4834d4, #686de0); }
+        .power-aux { background: linear-gradient(145deg, #7bed9f, #5f27cd); }
+        .vddq { background: linear-gradient(145deg, #70a1ff, #5352ed); }
+        .vref { background: linear-gradient(145deg, #ff9ff3, #f368e0); }
+        .data { background: linear-gradient(145deg, #26de81, #20bf6b); }
+        .address { background: linear-gradient(145deg, #fed330, #f7b731); }
+        .control { background: linear-gradient(145deg, #fd79a8, #e84393); }
+        .clock { background: linear-gradient(145deg, #a29bfe, #6c5ce7); }
+        .usb { background: linear-gradient(145deg, #fd79a8, #fdcb6e); }
+        .interrupt { background: linear-gradient(145deg, #e17055, #d63031); }
+        .sideband { background: linear-gradient(145deg, #00b894, #00a085); }
+        .status { background: linear-gradient(145deg, #fdcb6e, #e17055); }
+        .reserved { background: linear-gradient(145deg, #636e72, #2d3436); }
+        .detect { background: linear-gradient(145deg, #74b9ff, #0984e3); }
+
+        .key-notch {
+            width: 32px;
+            height: 30px;
+            background: linear-gradient(145deg, #333, #111);
+            border: 2px solid #666;
+            margin: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #ccc;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.95);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            border: 1px solid #444;
+        }
+
+        .pin:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .pin-numbers {
+            display: flex;
+            justify-content: center;
+            margin: 5px 0;
+            flex-wrap: wrap;
+        }
+
+        .pin-number {
+            width: 16px;
+            height: 15px;
+            margin: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #ccc;
+            background: rgba(0,0,0,0.3);
+            border-radius: 2px;
+        }
+
+        .specs {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .specs h3 {
+            color: #74b9ff;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
-    <header>
-    <h1>🚀 Projeto no GitHub 🚀</h1>
-    <p>Este projeto foi criado para teste. Sinta-se à vontade para explorar, usar e contribuir!</p>
-  </header>
+    <div class="container">
+        <h1>🔌 Conector AGP (Accelerated Graphics Port)</h1>
+        <p class="subtitle">Diagrama detalhado com 66 pinos por lado - Hover nos pinos para informações</p>
 
-  <div class="section">
-    <h2>🔧 Tecnologias Utilizadas 🔧</h2>
-    <ul>
-      <li>HTML, CSS, JavaScript</li>
-      <li>[Outras tecnologias: Nenhuma</li>
-    </ul>
-  </div>
+        <div class="connector-container">
+            <div class="connector">
+                <div class="pin-numbers" id="pin-numbers-top"></div>
+                
+                <div class="side-label">🔷 LADO A</div>
+                <div class="pins-row" id="side-a"></div>
+                
+                <div class="pins-row" id="side-b"></div>
+                <div class="side-label">🔶 LADO B</div>
+                
+                <div class="pin-numbers" id="pin-numbers-bottom"></div>
+            </div>
+        </div>
 
-  <div class="section">
-    <h2>✨ Funcionalidades</h2>
-    <ul>
-      <li>✅ Pensando...</li>
-      <li>✅ Pensando... 2.0</li>
-      <li>✅ Ainda Pensando...</li>
-    </ul>
-  </div>
+        <div class="specs">
+            <h3>📋 Especificações Técnicas</h3>
+            <p><strong>• Tensões de Operação:</strong> 3.3V (AGP 1.0), 1.5V (AGP 2.0), 0.8V (AGP 3.0)</p>
+            <p><strong>• Frequência do Clock:</strong> 66 MHz</p>
+            <p><strong>• Largura do Barramento:</strong> 32 bits</p>
+            <p><strong>• Multiplicadores:</strong> 1x, 2x, 4x, 8x</p>
+            <p><strong>• Conectores:</strong> 66 pinos por lado (132 total)</p>
+        </div>
 
-  <div class="section">
-    <h2>📦 Como Executar 📦</h2>
-    <pre><code>Ainda pensando no que fazer ....</code></pre>
-  </div>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color ground"></div>
+                <span><strong>Terra (GND)</strong> - Referência 0V</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color power-12v"></div>
+                <span><strong>+12V</strong> - Alimentação 12 volts</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color power-5v"></div>
+                <span><strong>+5V</strong> - Alimentação 5 volts</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color power-3v3"></div>
+                <span><strong>+3.3V</strong> - Alimentação 3.3 volts</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color vddq"></div>
+                <span><strong>Vddq</strong> - Tensão de I/O (3.3V/1.5V)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color data"></div>
+                <span><strong>Dados (AD)</strong> - Barramento de dados</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color address"></div>
+                <span><strong>Endereço</strong> - Barramento de endereço</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color control"></div>
+                <span><strong>Controle</strong> - Sinais de controle</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color clock"></div>
+                <span><strong>Clock/Reset</strong> - Clock e reset</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color sideband"></div>
+                <span><strong>Sideband</strong> - Barramento lateral</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color usb"></div>
+                <span><strong>USB</strong> - Passagem USB</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color detect"></div>
+                <span><strong>Detecção</strong> - Sinais de detecção</span>
+            </div>
+        </div>
+    </div>
 
-  <div class="section">
-    <h2>🌐 Link do Projeto 🌐</h2>
-    <p>
-      Acesse: <a href="https://github.com/G-Deon/G-Deon.github.io" target="_blank">https://github.com/G-Deon/G-Deon.github.io</a>
-    </p>
-  </div>
+    <script>
+        const pinData = {
+            1: { sideA: {signal: "+12V", type: "power-12v", desc: "Alimentação +12V"}, sideB: {signal: "OVERCNT#", type: "control", desc: "Aviso de sobrecorrente USB"} },
+            2: { sideA: {signal: "TYPEDET#", type: "detect", desc: "Detecção de capacidade 1.5V (AGP 2.0 4x)"}, sideB: {signal: "+5V", type: "power-5v", desc: "Alimentação +5V"} },
+            3: { sideA: {signal: "GC_DET#", type: "detect", desc: "Detecção de capacidade 0.8V (AGP 3.0 8x)"}, sideB: {signal: "+5V", type: "power-5v", desc: "Alimentação +5V"} },
+            4: { sideA: {signal: "USB-", type: "usb", desc: "USB diferencial negativo"}, sideB: {signal: "USB+", type: "usb", desc: "USB diferencial positivo"} },
+            5: { sideA: {signal: "GND", type: "ground", desc: "Terra"}, sideB: {signal: "GND", type: "ground", desc: "Terra"} },
+            6: { sideA: {signal: "INTA#", type: "interrupt", desc: "Linha de interrupção A"}, sideB: {signal: "INTB#", type: "interrupt", desc: "Linha de interrupção B"} },
+            7: { sideA: {signal: "RST#", type: "clock", desc: "Reset do barramento"}, sideB: {signal: "CLK", type: "clock", desc: "Clock 66 MHz"} },
+            8: { sideA: {signal: "GNT#", type: "control", desc: "Concessão do barramento"}, sideB: {signal: "REQ#", type: "control", desc: "Requisição do barramento"} },
+            9: { sideA: {signal: "+3.3V", type: "power-3v3", desc: "Alimentação +3.3V"}, sideB: {signal: "+3.3V", type: "power-3v3", desc: "Alimentação +3.3V"} },
+            10: { sideA: {signal: "ST[1]", type: "status", desc: "Status AGP bit 1"}, sideB: {signal: "ST[0]", type: "status", desc: "Status AGP bit 0"} },
+            11: { sideA: {signal: "MB_DET#", type: "detect", desc: "Detecção 0.8V pela placa-mãe"}, sideB: {signal: "ST[2]", type: "status", desc: "Status AGP bit 2"} },
+            12: { sideA: {signal: "PIPE#", type: "control", desc: "Requisição de pipeline"}, sideB: {signal: "RBF#", type: "control", desc: "Buffer de leitura cheio"} },
+            13: { sideA: {signal: "GND", type: "ground", desc: "Terra"}, sideB: {signal: "GND", type: "ground", desc: "Terra"} },
+            14: { sideA: {signal: "WBF#", type: "control", desc: "Buffer de escrita cheio"}, sideB: {signal: "DBI_LO", type: "control", desc: "Inversão de dados [15:0]"} },
+            15: { sideA: {signal: "SBA[1]", type: "sideband", desc: "Barramento de endereço lateral"}, sideB: {signal: "SBA[0]", type: "sideband", desc: "Barramento de endereço lateral"} },
+            16: { sideA: {signal: "+3.3V", type: "power-3v3", desc: "Alimentação +3.3V"}, sideB: {signal: "+3.3V", type: "power-3v3", desc: "Alimentação +3.3V"} },
+            17: { sideA: {signal: "SBA[3]", type: "sideband", desc: "Barramento de endereço lateral"}, sideB: {signal: "SBA[2]", type: "sideband", desc: "Barramento de endereço lateral"} },
+            18: { sideA: {signal: "SB_STB#", type: "sideband", desc: "Strobe do barramento lateral"}, sideB: {signal: "SB_STB", type: "sideband", desc: "Strobe do barramento lateral"} },
+            19: { sideA: {signal: "GND", type: "ground", desc: "Terra"}, sideB: {signal: "GND", type: "ground", desc: "Terra"} },
+            20: { sideA: {signal: "SBA[5]", type: "sideband", desc: "Barramento de endereço lateral"}, sideB: {signal: "SBA[4]", type: "sideband", desc: "Barramento de endereço lateral"} },
+            21: { sideA: {signal: "SBA[7]", type: "sideband", desc: "Barramento de endereço lateral"}, sideB: {signal: "SBA[6]", type: "sideband", desc: "Barramento de endereço lateral"} },
+            22: { sideA: {signal: "KEY", type: "key-notch", desc: "Chanfro para cartões AGP 3.3V"}, sideB: {signal: "KEY", type: "key-notch", desc: "Chanfro para cartões AGP 3.3V"} },
+            23: { sideA: {signal: "GND", type: "ground", desc: "Terra"}, sideB: {signal: "GND", type: "ground", desc: "Terra"} },
+            24: { sideA: {signal: "RSVD", type: "reserved", desc: "Reservado"}, sideB: {signal: "+3.3V aux", type: "power-aux", desc: "Alimentação auxiliar +3.3V"} },
+            25: { sideA: {signal: "+3.3V", type: "power-3v3", desc: "Alimentação +3.3V"}, sideB: {signal: "+3.3V", type: "power-3v3", desc: "Alimentação +3.3V"} },
+            26: { sideA: {signal: "AD[30]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[31]", type: "data", desc: "Barramento endereço/dados"} },
+            27: { sideA: {signal: "AD[28]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[29]", type: "data", desc: "Barramento endereço/dados"} },
+            28: { sideA: {signal: "+3.3V", type: "power-3v3", desc: "Alimentação +3.3V"}, sideB: {signal: "+3.3V", type: "power-3v3", desc: "Alimentação +3.3V"} },
+            29: { sideA: {signal: "AD[26]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[27]", type: "data", desc: "Barramento endereço/dados"} },
+            30: { sideA: {signal: "AD[24]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[25]", type: "data", desc: "Barramento endereço/dados"} },
+            31: { sideA: {signal: "GND", type: "ground", desc: "Terra"}, sideB: {signal: "GND", type: "ground", desc: "Terra"} },
+            32: { sideA: {signal: "AD_STB[1]#", type: "control", desc: "Strobe de dados complementar"}, sideB: {signal: "AD_STB[1]", type: "control", desc: "Strobe de dados"} },
+            33: { sideA: {signal: "C/BE[3]#", type: "control", desc: "Comando/Byte Enable"}, sideB: {signal: "AD[23]", type: "data", desc: "Barramento endereço/dados"} },
+            34: { sideA: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"}, sideB: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"} },
+            35: { sideA: {signal: "AD[22]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[21]", type: "data", desc: "Barramento endereço/dados"} },
+            36: { sideA: {signal: "AD[20]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[19]", type: "data", desc: "Barramento endereço/dados"} },
+            37: { sideA: {signal: "GND", type: "ground", desc: "Terra"}, sideB: {signal: "GND", type: "ground", desc: "Terra"} },
+            38: { sideA: {signal: "AD[18]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[17]", type: "data", desc: "Barramento endereço/dados"} },
+            39: { sideA: {signal: "AD[16]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "C/BE[2]#", type: "control", desc: "Comando/Byte Enable"} },
+            40: { sideA: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"}, sideB: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"} },
+            41: { sideA: {signal: "FRAME#", type: "control", desc: "Transferência em progresso"}, sideB: {signal: "IRDY#", type: "control", desc: "Iniciador pronto"} },
+            42: { sideA: {signal: "KEY", type: "key-notch", desc: "Chanfro para cartões AGP 1.5V"}, sideB: {signal: "KEY", type: "key-notch", desc: "Chanfro para cartões AGP 1.5V"} },
+            43: { sideA: {signal: "GND", type: "ground", desc: "Terra"}, sideB: {signal: "GND", type: "ground", desc: "Terra"} },
+            44: { sideA: {signal: "RSVD", type: "reserved", desc: "Reservado"}, sideB: {signal: "RSVD", type: "reserved", desc: "Reservado"} },
+            45: { sideA: {signal: "+3.3V", type: "power-3v3", desc: "Alimentação +3.3V"}, sideB: {signal: "+3.3V", type: "power-3v3", desc: "Alimentação +3.3V"} },
+            46: { sideA: {signal: "TRDY#", type: "control", desc: "Alvo pronto"}, sideB: {signal: "DEVSEL#", type: "control", desc: "Dispositivo selecionado"} },
+            47: { sideA: {signal: "STOP#", type: "control", desc: "Parada solicitada pelo alvo"}, sideB: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"} },
+            48: { sideA: {signal: "PME#", type: "control", desc: "Evento de gerenciamento de energia"}, sideB: {signal: "PERR#", type: "control", desc: "Erro de paridade"} },
+            49: { sideA: {signal: "GND", type: "ground", desc: "Terra"}, sideB: {signal: "GND", type: "ground", desc: "Terra"} },
+            50: { sideA: {signal: "PAR", type: "control", desc: "Paridade par (transações PCI 1x)"}, sideB: {signal: "SERR#", type: "control", desc: "Erro do sistema"} },
+            51: { sideA: {signal: "AD[15]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "C/BE[1]#", type: "control", desc: "Comando/Byte Enable"} },
+            52: { sideA: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"}, sideB: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"} },
+            53: { sideA: {signal: "AD[13]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[14]", type: "data", desc: "Barramento endereço/dados"} },
+            54: { sideA: {signal: "AD[11]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[12]", type: "data", desc: "Barramento endereço/dados"} },
+            55: { sideA: {signal: "GND", type: "ground", desc: "Terra"}, sideB: {signal: "GND", type: "ground", desc: "Terra"} },
+            56: { sideA: {signal: "AD[9]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[10]", type: "data", desc: "Barramento endereço/dados"} },
+            57: { sideA: {signal: "C/BE[0]#", type: "control", desc: "Comando/Byte Enable"}, sideB: {signal: "AD[8]", type: "data", desc: "Barramento endereço/dados"} },
+            58: { sideA: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"}, sideB: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"} },
+            59: { sideA: {signal: "AD_STB[0]#", type: "control", desc: "Strobe de dados complementar"}, sideB: {signal: "AD_STB[0]", type: "control", desc: "Strobe de dados"} },
+            60: { sideA: {signal: "AD[6]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[7]", type: "data", desc: "Barramento endereço/dados"} },
+            61: { sideA: {signal: "GND", type: "ground", desc: "Terra"}, sideB: {signal: "GND", type: "ground", desc: "Terra"} },
+            62: { sideA: {signal: "AD[4]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[5]", type: "data", desc: "Barramento endereço/dados"} },
+            63: { sideA: {signal: "AD[2]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[3]", type: "data", desc: "Barramento endereço/dados"} },
+            64: { sideA: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"}, sideB: {signal: "Vddq", type: "vddq", desc: "Tensão de I/O (3.3V ou 1.5V)"} },
+            65: { sideA: {signal: "AD[0]", type: "data", desc: "Barramento endereço/dados"}, sideB: {signal: "AD[1]", type: "data", desc: "Barramento endereço/dados"} },
+            66: { sideA: {signal: "Vreggc", type: "vref", desc: "Tensão de referência I/O"}, sideB: {signal: "Vregcg", type: "vref", desc: "Tensão de referência I/O"} }
+        };
 
-  <footer>
-    <p>Feito com 💙 e com um pouco de ódio por <a href="https://github.com/G-Deon" target="_blank">G-Deon</a></p>
-  </footer>
+        function createPins() {
+            const sideA = document.getElementById('side-a');
+            const sideB = document.getElementById('side-b');
+            const pinNumbersTop = document.getElementById('pin-numbers-top');
+            const pinNumbersBottom = document.getElementById('pin-numbers-bottom');
+
+            for (let i = 1; i <= 66; i++) {
+                const numTop = document.createElement('div');
+                numTop.className = 'pin-number';
+                numTop.textContent = i;
+                pinNumbersTop.appendChild(numTop);
+
+                const pinA = document.createElement('div');
+                const dataA = pinData[i].sideA;
+                
+                if (dataA.type === 'key-notch') {
+                    pinA.className = 'key-notch';
+                    pinA.textContent = 'KEY';
+                } else {
+                    pinA.className = `pin ${dataA.type}`;
+                    pinA.textContent = i;
+                    
+                    const tooltipA = document.createElement('div');
+                    tooltipA.className = 'tooltip';
+                    tooltipA.innerHTML = `<strong>Pino ${i}A:</strong> ${dataA.signal}<br>${dataA.desc}`;
+                    pinA.appendChild(tooltipA);
+                }
+                sideA.appendChild(pinA);
+
+                // Pino lado B
+                const pinB = document.createElement('div');
+                const dataB = pinData[i].sideB;
+                
+                if (dataB.type === 'key-notch') {
+                    pinB.className = 'key-notch';
+                    pinB.textContent = 'KEY';
+                } else {
+                    pinB.className = `pin ${dataB.type}`;
+                    pinB.textContent = i;
+                    
+                    const tooltipB = document.createElement('div');
+                    tooltipB.className = 'tooltip';
+                    tooltipB.innerHTML = `<strong>Pino ${i}B:</strong> ${dataB.signal}<br>${dataB.desc}`;
+                    pinB.appendChild(tooltipB);
+                }
+                sideB.appendChild(pinB);
+
+                const numBottom = document.createElement('div');
+                numBottom.className = 'pin-number';
+                numBottom.textContent = i;
+                pinNumbersBottom.appendChild(numBottom);
+            }
+        }
+
+        createPins();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const pins = document.querySelectorAll('.pin');
+            pins.forEach(pin => {
+                pin.addEventListener('mouseenter', function(e) {
+                    this.style.zIndex = '1000';
+                });
+                pin.addEventListener('mouseleave', function(e) {
+                    this.style.zIndex = '1';
+                });
+            });
+        });
+    </script>
 </body>
 </html>
