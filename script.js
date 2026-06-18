@@ -39,6 +39,22 @@ function addWord() {
   highlightState(0, "current");
 }
 
+function removeWord(word) {
+  words = words.filter((w) => w !== word);
+  rebuildAFD();
+  renderWordChips();
+
+  if (words.length === 0) {
+    document.querySelector(".table-wrap").hidden = true;
+    document.getElementById("afdTable").innerHTML = "";
+  } else {
+    buildTable();
+  }
+
+  resetHighlights();
+  highlightState(0, "current");
+}
+
 function rebuildAFD() {
   transitions = {};
   finalStates = new Set();
@@ -62,7 +78,10 @@ function rebuildAFD() {
 function renderWordChips() {
   const chipsContainer = document.getElementById("wordChips");
   chipsContainer.innerHTML = words
-    .map((word) => `<span class="word-chip">${word}</span>`)
+    .map(
+      (word) =>
+        `<span class="word-chip">${word}<span class="word-chip-remove" onclick="removeWord('${word}')">×</span></span>`,
+    )
     .join("");
 }
 
