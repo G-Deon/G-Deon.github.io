@@ -2,56 +2,212 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Analisador Léxico — AFD</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Analisador Sintático</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Iosevka+Charon:wght@400;500;700&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
-    <script src="script.js" defer></script>
   </head>
   <body>
-    <div id="app">
-      <div id="header">
-        <h2>Analisador Léxico</h2>
-      </div>
-      <div class="section-label">Adicionar palavra ao autômato</div>
-      <div class="row">
-        <input
-          type="text"
-          id="wordInput"
-          placeholder="Digite uma palavra para adicionar ao autômato"
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <button onclick="addWord()">Adicionar</button>
-        <button onclick="resetAll()">Reiniciar</button>
-      </div>
-      <div class="err-msg" id="errMsg"></div>
-      <div class="word-chips" id="wordChips"></div>
+    <main class="card">
+      <h1>Analisador Sintático</h1>
+
+      <section class="cols">
+        <div>
+          <h2>Gramática</h2>
+          <div class="table-wrap">
+            <table id="tabela-gramatica">
+              <tbody>
+                <tr>
+                  <th>S::=</th>
+                  <td>cAb</td>
+                  <td>aCc</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>A::=</th>
+                  <td>aBc</td>
+                  <td>bSb</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>B::=</th>
+                  <td>aBc</td>
+                  <td>bAa</td>
+                  <td>ε</td>
+                </tr>
+                <tr>
+                  <th>C::=</th>
+                  <td>bAa</td>
+                  <td>aCb</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <h2>First</h2>
+          <div class="table-wrap">
+            <table id="tabela-first">
+              <tbody>
+                <tr>
+                  <th>S::=</th>
+                  <td>a</td>
+                  <td>c</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>A::=</th>
+                  <td>a</td>
+                  <td>b</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>B::=</th>
+                  <td>a</td>
+                  <td>b</td>
+                  <td>ε</td>
+                </tr>
+                <tr>
+                  <th>C::=</th>
+                  <td>a</td>
+                  <td>b</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <h2>Follow</h2>
+          <div class="table-wrap">
+            <table id="tabela-follow">
+              <tbody>
+                <tr>
+                  <th>S::=</th>
+                  <td>$</td>
+                  <td>b</td>
+                </tr>
+                <tr>
+                  <th>A::=</th>
+                  <td>a</td>
+                  <td>b</td>
+                </tr>
+                <tr>
+                  <th>B::=</th>
+                  <td>c</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>C::=</th>
+                  <td>b</td>
+                  <td>c</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
       <hr />
 
-      <div class="section-label" style="margin-top: 0.75rem">
-        Analisar token
-      </div>
-      <div class="row">
-        <input
-          type="text"
-          id="lexInput"
-          placeholder="Digite e pressione espaço para reconhecer"
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <div class="result-box" id="resultBox">aguardando</div>
-      </div>
-      <div class="tokens-list" id="tokensList"></div>
-    </div>
-    <div class="table-wrap" hidden>
-      <table id="afdTable"></table>
-    </div>
+      <section>
+        <h2>Tabela de parsing</h2>
+        <div class="table-wrap">
+          <table id="tabela-parsing">
+            <thead>
+              <tr>
+                <th></th>
+                <th>a</th>
+                <th>b</th>
+                <th>c</th>
+                <th>$</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>S</th>
+                <td>S → aCc</td>
+                <td></td>
+                <td>S → cAb</td>
+                <td></td>
+              </tr>
+              <tr>
+                <th>A</th>
+                <td>A → aBc</td>
+                <td>A → bSb</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <th>B</th>
+                <td>B → aBc</td>
+                <td>B → bAa</td>
+                <td>B → ε</td>
+                <td></td>
+              </tr>
+              <tr>
+                <th>C</th>
+                <td>C → aCb</td>
+                <td>C → bAa</td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <hr />
+
+      <section>
+        <label for="sentenca">Analisar sentença</label>
+        <div class="row">
+          <input
+            type="text"
+            id="sentenca"
+            placeholder="Digite uma sentença para reconhecer"
+            autocomplete="off"
+          />
+          <button type="button" id="btn-gerar">Gerar</button>
+          <button type="button" id="btn-analisar">Analisar</button>
+          <button type="button" id="btn-passo">Passo a passo</button>
+          <span class="status" id="status">aguardando</span>
+        </div>
+        <div class="chips" id="historico"></div>
+      </section>
+
+      <hr />
+
+      <section>
+        <h2>Passos da pilha</h2>
+        <div class="table-wrap">
+          <table id="tabela-passos">
+            <thead>
+              <tr>
+                <th>Pilha</th>
+                <th>Entrada</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="result" id="resultado"></div>
+
+        <div class="actions">
+          <button type="button" id="btn-reiniciar">Reiniciar</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
   </body>
 </html>

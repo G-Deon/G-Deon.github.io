@@ -1,294 +1,243 @@
-const ALPHABET = "abcdefghijklmnopqrstuvwxyz".split("");
-let transitions = {};
-let finalStates = new Set();
-let stateCount = 1;
-let words = [];
-let currentState = 0;
-let currentInput = "";
-let errorState = false;
+const gramatica = {
+  inicial: "S",
+  regras: {
+    S: [
+      ["c", "A", "b"],
+      ["a", "C", "c"],
+    ],
+    A: [
+      ["a", "B", "c"],
+      ["b", "S", "b"],
+    ],
+    B: [["a", "B", "c"], ["b", "A", "a"], ["ε"]],
+    C: [
+      ["b", "A", "a"],
+      ["a", "C", "b"],
+    ],
+  },
+};
 
-function addTransition(fromState, character, toState) {
-  if (!transitions[fromState]) transitions[fromState] = {};
-  transitions[fromState][character] = toState;
+let first = {
+  S: ["a", "c"],
+  A: ["a", "b"],
+  B: ["a", "b", "ε"],
+  C: ["a", "b"],
+};
+
+let follow = {
+  S: ["$", "b"],
+  A: ["a", "b"],
+  B: ["c"],
+  C: ["b", "c"],
+};
+
+let tabela = {
+  S: { a: ["a", "C", "c"], c: ["c", "A", "b"] },
+  A: { a: ["a", "B", "c"], b: ["b", "S", "b"] },
+  B: { a: ["a", "B", "c"], b: ["b", "A", "a"], c: ["ε"] },
+  C: { a: ["a", "C", "b"], b: ["b", "A", "a"] },
+};
+
+const el = {
+  historico: document.getElementById("historico"),
+  sentenca: document.getElementById("sentenca"),
+  status: document.getElementById("status"),
+  passos: document.querySelector("#tabela-passos tbody"),
+  resultado: document.getElementById("resultado"),
+  btnAnalisar: document.getElementById("btn-analisar"),
+  btnGerar: document.getElementById("btn-gerar"),
+  btnReiniciar: document.getElementById("btn-reiniciar"),
+  btnPasso: document.getElementById("btn-passo"),
+};
+
+let passosAtuais = [];
+let aceitaAtual = false;
+let passoIndex = 0;
+
+const terminadora = { S: 0, A: 0, B: 2, C: 0 };
+const CHANCE_ERRO = 1 / 5;
+
+function derivar(simbolo, profundidade) {
+  if (!(simbolo in gramatica.regras)) return simbolo === "ε" ? "" : simbolo;
+
+  const opcoes = gramatica.regras[simbolo];
+  const escolha =
+    profundidade >= 4
+      ? opcoes[terminadora[simbolo]]
+      : opcoes[Math.floor(Math.random() * opcoes.length)];
+
+  return escolha.map((s) => derivar(s, profundidade + 1)).join("");
 }
 
-function addWord() {
-  const wordInput = document.getElementById("wordInput");
-  const errorMessage = document.getElementById("errMsg");
-  const word = wordInput.value.replace(/[^a-z]/g, "").toLowerCase();
+function gerarSentenca() {
+  const letras = ["a", "b", "c"];
+  const s = derivar(gramatica.inicial, 0).split("");
 
-  errorMessage.textContent = "";
+  if (Math.random() < CHANCE_ERRO) {
+    const pos = Math.floor(Math.random() * s.length);
+    const letra = letras[Math.floor(Math.random() * letras.length)];
+    const tipo = Math.floor(Math.random() * 3);
 
-  if (!word) {
-    errorMessage.textContent =
-      "Digite uma palavra válida (somente letras minúsculas).";
-    return;
-  }
-  if (words.includes(word)) {
-    errorMessage.textContent = `"${word}" já está no autômato.`;
-    wordInput.value = "";
-    return;
+    if (tipo === 0) s.splice(pos, 0, letra);
+    if (tipo === 1) s[pos] = letra;
+    if (tipo === 2) s.splice(pos, 1);
   }
 
-  words.push(word);
-  rebuildAFD();
-  wordInput.value = "";
-  renderWordChips();
-  buildTable();
-  resetHighlights();
-  highlightState(0, "current");
+  return s.join("");
 }
 
-function removeWord(word) {
-  words = words.filter((w) => w !== word);
-  rebuildAFD();
-  renderWordChips();
+function analisar(sentenca) {
+  const tokens = sentenca.replace(/\s+/g, "").split("");
+  tokens.push("$");
 
-  if (words.length === 0) {
-    document.querySelector(".table-wrap").hidden = true;
-    document.getElementById("afdTable").innerHTML = "";
-  } else {
-    buildTable();
-  }
+  const pilha = ["$", gramatica.inicial];
+  const passos = [];
+  let i = 0;
 
-  resetHighlights();
-  highlightState(0, "current");
-}
+  while (true) {
+    const topo = pilha[pilha.length - 1];
+    const atual = tokens[i];
+    const registro = { pilha: [...pilha], entrada: tokens.slice(i) };
 
-function rebuildAFD() {
-  transitions = {};
-  finalStates = new Set();
-  stateCount = 1;
-
-  words.forEach((word) => {
-    let state = 0;
-    for (const character of word) {
-      if (transitions[state] && transitions[state][character] !== undefined) {
-        state = transitions[state][character];
-      } else {
-        const newState = stateCount++;
-        addTransition(state, character, newState);
-        state = newState;
-      }
+    if (topo === "$" && atual === "$") {
+      passos.push({
+        ...registro,
+        acao: `Aceito em ${passos.length + 1} passos`,
+      });
+      return { aceita: true, passos };
     }
-    finalStates.add(state);
+
+    if (topo in gramatica.regras) {
+      const producao = tabela[topo][atual];
+
+      if (!producao) {
+        passos.push({
+          ...registro,
+          acao: `Erro em ${passos.length + 1} passos`,
+        });
+        return { aceita: false, passos };
+      }
+
+      passos.push({ ...registro, acao: `${topo} → ${producao.join("")}` });
+      pilha.pop();
+
+      if (producao[0] !== "ε") {
+        for (let k = producao.length - 1; k >= 0; k--) {
+          pilha.push(producao[k]);
+        }
+      }
+    } else if (topo === atual) {
+      passos.push({ ...registro, acao: `Ler ${atual}` });
+      pilha.pop();
+      i++;
+    } else {
+      passos.push({
+        ...registro,
+        acao: `Erro em ${passos.length + 1} passos, esperado ${topo}, encontrado ${atual}`,
+      });
+      return { aceita: false, passos };
+    }
+  }
+}
+
+function renderPassos(passos) {
+  el.passos.innerHTML = "";
+  passos.forEach((p, n) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.pilha.join(" ")}</td>
+      <td>${p.entrada.join(" ")}</td>
+      <td>${p.acao}</td>`;
+    if (n === passos.length - 1) tr.className = "active";
+    el.passos.appendChild(tr);
   });
 }
 
-function renderWordChips() {
-  const chipsContainer = document.getElementById("wordChips");
-  chipsContainer.innerHTML = words
-    .map(
-      (word) =>
-        `<span class="word-chip">${word}<span class="word-chip-remove" onclick="removeWord('${word}')">×</span></span>`,
-    )
-    .join("");
+function adicionarHistorico(sentenca, aceita) {
+  const texto = sentenca.replace(/\s+/g, "");
+  if (texto === "") return;
+
+  const jaExiste = [...el.historico.children].some(
+    (chip) => chip.textContent === texto,
+  );
+  if (jaExiste) return;
+
+  const chip = document.createElement("span");
+  chip.className = "chip " + (aceita ? "ok" : "err");
+  chip.textContent = texto;
+  el.historico.appendChild(chip);
 }
 
-function buildTable() {
-  const tableElement = document.getElementById("afdTable");
-  tableElement.innerHTML = "";
+function mostrarResultado(aceita) {
+  adicionarHistorico(el.sentenca.value, aceita);
+  el.status.textContent = aceita ? "aceita" : "rejeitada";
+  el.status.className = "status " + (aceita ? "ok" : "err");
 
-  const tableWrapper = document.querySelector(".table-wrap");
-  if (tableWrapper.hidden === true) {
-    tableWrapper.hidden = false;
+  el.resultado.textContent = aceita
+    ? "Sentença aceita."
+    : "Sentença rejeitada.";
+  el.resultado.className = "result " + (aceita ? "ok" : "err");
+}
+
+function resetarPassos() {
+  passosAtuais = [];
+  passoIndex = 0;
+  el.btnPasso.textContent = "Passo a passo";
+  el.btnPasso.disabled = false;
+}
+
+function reiniciar() {
+  resetarPassos();
+  el.historico.innerHTML = "";
+  el.sentenca.value = "";
+  el.passos.innerHTML = "";
+  el.status.textContent = "aguardando";
+  el.status.className = "status";
+  el.resultado.textContent = "";
+  el.resultado.className = "result";
+}
+
+el.btnAnalisar.addEventListener("click", () => {
+  resetarPassos();
+  const { aceita, passos } = analisar(el.sentenca.value);
+  renderPassos(passos);
+  mostrarResultado(aceita);
+});
+
+el.btnPasso.addEventListener("click", () => {
+  if (passoIndex === 0) {
+    const r = analisar(el.sentenca.value);
+    passosAtuais = r.passos;
+    aceitaAtual = r.aceita;
+    el.resultado.textContent = "";
+    el.resultado.className = "result";
   }
 
-  const headerRow = document.createElement("tr");
-  const emptyHeaderCell = document.createElement("th");
-  emptyHeaderCell.textContent = "";
-  headerRow.appendChild(emptyHeaderCell);
+  passoIndex++;
+  renderPassos(passosAtuais.slice(0, passoIndex));
 
-  ALPHABET.forEach((character) => {
-    const headerCell = document.createElement("th");
-    headerCell.textContent = character;
-    headerRow.appendChild(headerCell);
-  });
-  tableElement.appendChild(headerRow);
-
-  for (let state = 0; state < stateCount; state++) {
-    const tableRow = document.createElement("tr");
-
-    const stateLabelCell = document.createElement("td");
-    stateLabelCell.className = "state-label";
-    stateLabelCell.id = `sl-${state}`;
-    stateLabelCell.textContent = finalStates.has(state)
-      ? `q${state}*`
-      : `q${state}`;
-    tableRow.appendChild(stateLabelCell);
-
-    ALPHABET.forEach((character) => {
-      const transitionCell = document.createElement("td");
-      transitionCell.id = `c-${state}-${character}`;
-
-      if (transitions[state] && transitions[state][character] !== undefined) {
-        transitionCell.textContent = `q${transitions[state][character]}`;
-        transitionCell.className = "transition";
-      }
-
-      tableRow.appendChild(transitionCell);
-    });
-
-    tableElement.appendChild(tableRow);
-  }
-}
-
-function resetHighlights() {
-  for (let state = 0; state < stateCount; state++) {
-    const stateLabelCell = document.getElementById(`sl-${state}`);
-    if (stateLabelCell) stateLabelCell.className = "state-label";
-
-    ALPHABET.forEach((character) => {
-      const transitionCell = document.getElementById(`c-${state}-${character}`);
-      if (!transitionCell) return;
-
-      if (transitions[state] && transitions[state][character] !== undefined)
-        transitionCell.className = "transition";
-      else transitionCell.className = "";
-    });
-  }
-}
-
-function highlightState(state, type) {
-  const stateLabelCell = document.getElementById(`sl-${state}`);
-  if (!stateLabelCell) return;
-
-  if (type === "current") stateLabelCell.className = "state-label active-state";
-  else if (type === "final")
-    stateLabelCell.className = "state-label final-state";
-  else if (type === "error")
-    stateLabelCell.className = "state-label error-state";
-}
-
-function highlightCell(fromState, character) {
-  const transitionCell = document.getElementById(`c-${fromState}-${character}`);
-  if (transitionCell) transitionCell.className = "transition current";
-}
-
-function updateDisplay() {
-  resetHighlights();
-  const resultBox = document.getElementById("resultBox");
-
-  if (currentInput.length === 0) {
-    highlightState(0, "current");
-    resultBox.className = "result-box";
-    resultBox.textContent = "aguardando";
-  } else if (errorState) {
-    resultBox.className = "result-box err";
-    resultBox.textContent = "Inválido";
+  if (passoIndex === passosAtuais.length) {
+    mostrarResultado(aceitaAtual);
+    el.btnPasso.textContent = "Passo a passo";
+    el.btnPasso.disabled = true;
   } else {
-    highlightState(currentState, "current");
-
-    if (currentInput.length > 0) {
-      const lastCharacter = currentInput[currentInput.length - 1];
-      let previousState = 0;
-
-      for (let i = 0; i < currentInput.length - 1; i++) {
-        const character = currentInput[i];
-        if (
-          transitions[previousState] &&
-          transitions[previousState][character] !== undefined
-        )
-          previousState = transitions[previousState][character];
-      }
-
-      highlightCell(previousState, lastCharacter);
-    }
-
-    resultBox.className = "result-box typing";
-    resultBox.textContent = `q${currentState}`;
-  }
-}
-
-function processToken(token) {
-  if (!token) return;
-
-  let state = 0;
-  let isValid = true;
-
-  for (const character of token) {
-    if (transitions[state] && transitions[state][character] !== undefined)
-      state = transitions[state][character];
-    else {
-      isValid = false;
-      break;
-    }
-  }
-
-  const isAccepted = isValid && finalStates.has(state);
-  const tokenChip = document.createElement("span");
-  tokenChip.className = `token-chip ${isAccepted ? "chip-ok" : "chip-err"}`;
-  tokenChip.textContent = `${token} ${isAccepted ? "" : ""}`;
-  document.getElementById("tokensList").appendChild(tokenChip);
-
-  resetHighlights();
-  const resultBox = document.getElementById("resultBox");
-
-  if (isAccepted) {
-    highlightState(state, "final");
-    resultBox.className = "result-box ok";
-    resultBox.textContent = "Reconhecido";
-  } else {
-    highlightState(state, "error");
-    resultBox.className = "result-box err";
-    resultBox.textContent = "Rejeitado";
-  }
-}
-
-document.getElementById("lexInput").addEventListener("keydown", function (e) {
-  if (e.key === " ") {
-    e.preventDefault();
-    const token = currentInput.trim();
-    if (token.length > 0) processToken(token);
-    currentInput = "";
-    currentState = 0;
-    errorState = false;
-    this.value = "";
+    el.status.textContent = "analisando";
+    el.status.className = "status";
+    el.btnPasso.textContent = "Próximo passo";
   }
 });
 
-document.getElementById("lexInput").addEventListener("input", function () {
-  const filteredInput = this.value.replace(/[^a-z]/g, "");
-  if (filteredInput !== this.value) this.value = filteredInput;
-  currentInput = filteredInput;
-  currentState = 0;
-  errorState = false;
+el.sentenca.addEventListener("input", resetarPassos);
 
-  for (const character of currentInput) {
-    if (
-      transitions[currentState] &&
-      transitions[currentState][character] !== undefined
-    )
-      currentState = transitions[currentState][character];
-    else {
-      errorState = true;
-      break;
-    }
-  }
-
-  updateDisplay();
+el.btnGerar.addEventListener("click", () => {
+  resetarPassos();
+  el.sentenca.value = gerarSentenca();
 });
 
-document.getElementById("wordInput").addEventListener("keydown", function (e) {
-  if (e.key === "Enter") addWord();
-});
+el.btnReiniciar.addEventListener("click", reiniciar);
 
-function resetAll() {
-  transitions = {};
-  finalStates = new Set();
-  stateCount = 1;
-  words = [];
-  currentState = 0;
-  currentInput = "";
-  errorState = false;
-
-  document.getElementById("wordInput").value = "";
-  document.getElementById("lexInput").value = "";
-  document.getElementById("wordChips").innerHTML = "";
-  document.getElementById("tokensList").innerHTML = "";
-  document.getElementById("errMsg").textContent = "";
-  document.getElementById("resultBox").className = "result-box";
-  document.getElementById("resultBox").textContent = "aguardando";
-  document.querySelector(".table-wrap").hidden = true;
-  document.getElementById("afdTable").innerHTML = "";
+function iniciar() {
+  reiniciar();
 }
+
+iniciar();
